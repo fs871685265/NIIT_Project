@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>首页</title>
+    <link th:href="@{/css/bootstrap.min.css}" rel="stylesheet">
+    <link th:href="@{/css/bootstrap-table.css}" rel="stylesheet">
+</head>
+<body>
+
+<!-- 导航 -->
+<nav class="navbar navbar-default" role="navigation" style="padding-bottom: 0">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="#">历史订单管理</a>
+        </div>
+        <ul class="nav navbar-nav navbar-right">
+            <li><img class="img-circle" style="height: 50px;width: 50px" id="img" th:src="${session.user.savePath}">&nbsp;&nbsp;
+            </li>
+            <li class="navbar-brand"><span th:text="${session.user.name}"></span></li>
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">操作<span class="caret"></span></a>
+                <ul class="dropdown-menu" role="menu">
+                    <li><a th:href="@{/page/to_user}">首页</a></li>
+                    <li><a th:href="@{/page/to_order}">订单管理</a></li>
+                    <li><a th:href="@{/user/logout}">退出</a></li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<!--<div class="container">-->
+<!--    <button type="button" class="btn btn-default btn-sm">-->
+<!--        <span class="glyphicon glyphicon-refresh"></span>-->
+<!--    </button>-->
+<!--</div>-->
+
+<div class="modal fade" id="deleteOrder" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModalLabel1">删除</h4>
+            </div>
+            <div class="modal-body">
+                <form th:action="@{/tour/deleteOrder}" enctype="multipart/form-data"
+                      method="post"
+                      class="form-horizontal"
+                      role="form">
+                    <input type="hidden" name="oId" id="oId">
+
+                    <div style="width: 550px;padding-left: 10px">
+                        <div class="form-group">
+                            确定删除
+                            时间：<input type="text" class="form-control" name="oTime" id="oTime" disabled >
+                            旅游地点：<input type="text" class="form-control" name="oName" id="oName" disabled >
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-xs btn-danger block full-width m-b" id="tourSubmit">确定</button>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="bbtn btn-xs btn-white" data-dismiss="modal">我点错了</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal -->
+</div>
+
+<div class="modal fade" id="pay" tabindex="-1" role="dialog"  aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModalLabel2">支付</h4>
+            </div>
+            <div class="modal-body">请您扫码支付</div>
+            <div><img src="/etour/pic/pay.png" width="220px" height="200px" /></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal" >我点错了</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal" id="success" >支付完成</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal -->
+</div>
+
+<div style="height: 400px">
+    <table id="tb" class="table table-bordered table-striped table-hover ">
+    </table>
+</div>
+
+<script th:src="@{/js/jquery.min.js}"></script>
+<script th:src="@{/js/bootstrap.min.js}"></script>
+<script th:src="@{/js/bootstrap-table.js}"></script>
+<script th:src="@{/js/bootstrap-table-zh-CN.js}"></script>
+<script th:inline="javascript">
+    const path = [[${#request.getContextPath()}]];
+    let user = [[${session.user}]];
+
+    $(function () {
+        querydata();
+    });
+
+    // function addFunctionAlty(value, row, index) {
+    //     return [
+    //         '<button class="btn btn-primary btn-lg" data-toggle="modal" data-target="#pay">支付</button>',
+    //         '<button class="btn btn-primary btn-lg" data-toggle="modal" data-target="#delete">删除</button>',
+    //     ].join('');
+    // }
+    window.operateEvents = {
+        'click #bind': function (e, value, row, index) {
+            alert(row.qxxh);
+            $("#upload").modal('show');
+        }, 'click #unbind': function (e, value, row, index) {
+            alert(row.qxxh);
+            $("#upload").modal('show');
+        }
+    };
+
+    // $(function () { $('#success').modal("hide")});
+    //
+    // $(function () { $('#success').on('hide.bs.modal', function () {
+    //     alert('祝您旅途愉快！！');})
+    // });
+
+    $("#success").click(function(){
+        alert("祝您旅途愉快！！");
+    });
+
+    $("#tourSubmit").click(function(){
+        alert("删除成功！！");
+    });
+
+    function querydata() {
+        $("#tb").bootstrapTable({
+            url: path + "/tour/orderList",
+            pagination: true,
+            pageSize: 3,
+            pageNumber: 1,
+            pageList: [3, 4, 5],
+            //showRefresh: true,//刷新按钮
+            sidePagination: "server",
+            queryParamsType: "undefined",
+            queryParams: function (params) {
+                let newParams = {
+                    pageNumber: params.pageNumber,
+                    pageSize: params.pageSize,
+                }
+                newParams.userName = user.name;
+                return newParams;
+            },
+            columns: [
+                {
+                    field: "oId",
+                    title: "编号",
+                },
+                {
+                    field: "oName",
+                    title: "商品名",
+                },{
+                    field: "oSimpleDes",
+                    title: "详情"
+                }, {
+                    field: "oPrice",
+                    title: "总价格"
+                }, {
+                    field: "oTime",
+                    title: "下单时间"
+                }, {
+                    //field: 'operation',
+                    title: '操作',
+                    formatter: function (value, row, index) {
+                        let pay = "<a class='btn btn-primary' id='pay'>支付</a>";
+                        let del = "<a class='btn btn-primary' id='del'>删除</a>";
+                        return pay + "--" + del;
+                    },
+                    events: etevents
+                }]
+    });
+    }
+    window.etevents={
+        'click #pay':function(event,value,row,index){
+            $("#pay").modal("show");
+        },
+        'click #del':function(event,value,row,index){
+            $("#oId").val(row.oId);
+            $("#oName").val(row.oName);
+            $("#oTime").val(row.oTime);
+            $("#deleteOrder").modal("show");
+        }
+    }
+
+    function queryByTj() {
+        $("#tb").bootstrapTable("refresh");
+    }
+
+</script>
+</body>
+</html>

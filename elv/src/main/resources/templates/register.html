@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <title>EasyTour - 注册</title>
+
+
+    <link rel="shortcut icon" th:href="@{favicon.ico}">
+    <link th:href="@{/css/bootstrap.min.css}" rel="stylesheet">
+    <link th:href="@{/css/font-awesome.css}" rel="stylesheet">
+
+    <link th:href="@{/css/animate.css}" rel="stylesheet">
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+
+    <script>if (window.top !== window.self) {
+        window.top.location = window.location;
+    }</script>
+</head>
+
+<body class="gray-bg">
+
+<div class="middle-box text-center loginscreen  animated fadeInDown" style="padding-bottom: 100px">
+    <div>
+        <img src="/etour/pic/logo.png" width="300px" >
+        <h3>欢迎使用 易游网</h3>
+
+        <form class="m-t" role="form" th:action="@{/user/register}" enctype="multipart/form-data"
+              method="post">
+            <div class="form-group">
+                <input type="text" name="name" class="form-control" placeholder="用户名" required
+                       onblur="checkName(this.value)">
+                <span style="color: red;font-size: 15px" id="span1"></span>
+            </div>
+            <div class="form-group">
+                <input type="password" name="password" class="form-control" placeholder="密码" required>
+            </div>
+            <div class="form-group">
+                <input type="email" name="email" class="form-control" placeholder="邮箱" required>
+            </div>
+            <div class="form-group">
+                <input type="text" name="phone" class="form-control" placeholder="电话" required>
+            </div>
+            <div class="form-group">
+                <label>请选择头像</label>
+                <input type="file" name="pic" class="form-control" placeholder="头像" required>
+            </div>
+            <div class="form-group">
+                <input with="300px" type="text" id="verifyCode" name="verifyCode"
+                       class="form-control" placeholder="验证码" required>
+            </div>
+            <div class="form-group" style="float: left">
+                <img onclick="changeCode()" id="pic"
+                     th:src="@{/verifyCode}"/>
+            </div>
+            <span style="color:red;font-size: 18px" th:text="${error}"></span>
+            <button type="submit" class="btn btn-primary block full-width m-b" id="submit" disabled>注 册</button>
+
+
+        </form>
+    </div>
+</div>
+
+<!-- 全局js -->
+<script th:src="@{/js/jquery.min.js}"></script>
+<script th:src="@{/js/bootstrap.min.js}"></script>
+<script th:inline="javascript" type="text/javascript">
+    let contextPath = [[${#request.getContextPath()}]];
+    $('#loginModal').modal('show');
+    function changeCode() {
+        $('#pic').attr('src', contextPath + "/verifyCode?" + new Date().getTime());
+    }
+
+    function checkName(value) {
+        $.ajax({
+            type: 'post',
+            url: contextPath + '/user/checkName',
+            data: 'name=' + value,
+            dataType: 'text',
+            success: (msg) => {
+                document.getElementById("submit").removeAttribute("disabled");
+                if (msg === "success") {
+                    $("#span1").html("用户名重复");
+                    $("#submit").attr("disabled", "true");
+                } else {
+                    $("#span1").html("");
+                }
+            }
+        });
+    }
+</script>
+
+</body>
+
+</html>

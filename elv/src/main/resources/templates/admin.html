@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>首页</title>
+    <link th:href="@{/css/bootstrap.min.css}" rel="stylesheet">
+    <link th:href="@{/css/bootstrap-table.css}" rel="stylesheet">
+</head>
+<body>
+<!-- 导航 -->
+<nav class="navbar navbar-default" role="navigation" style="padding-bottom: 0">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="#">后台信息管理</a>
+        </div>
+        <ul class="nav navbar-nav navbar-right">
+            <li><img class="img-circle" style="height: 50px;width: 50px" id="img" th:src="${session.user.savePath}">&nbsp;&nbsp;
+            </li>
+            <li class="navbar-brand"><span th:text="${session.user.name}"></span></li>
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">操作<span class="caret"></span></a>
+                <ul class="dropdown-menu" role="menu">
+                    <li><a onclick="updateUser()">个人信息维护</a></li>
+                    <li><a th:href="@{/page/to_addTour}">新增</a></li>
+                    <li><a th:href="@{/user/logout}">退出</a></li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+</nav>
+<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true" style="padding-top: 0;">
+    <div class="panel-body">
+        <form class="form-inline" role="form">
+            <div class="form-group">
+                <label>商品名:</label>
+                <input type="text" class="form-control"
+                       id="tourname"
+                       placeholder="商品名">
+            </div>
+            <button type="button" class="btn btn-primary" onclick="queryByTj()">查询</button>
+        </form>
+    </div>
+</div>
+</div>
+
+<div style="height: 400px">
+    <table id="tb" class="table table-bordered table-striped table-hover ">
+    </table>
+</div>
+
+<!--  修改个人资料模态框  -->
+<div class="modal fade" id="updateUser" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span
+                        class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="myModalLabel">Modal title</h4>
+            </div>
+            <div class="modal-body">
+                <!-- 1. 获得参数  2.根据主键查询 3.ma.setName()  4.update  -->
+                <form th:action="@{/user/updateUser}" enctype="multipart/form-data"
+                      method="post"
+                      class="form-horizontal"
+                      role="form">
+                    <input type="hidden" name="id" id="hiddenUserId">
+                    <input type="hidden" name="hiddenPic" id="hiddenUserPic">
+                    <input type="hidden" name="name" id="hiddenUserName">
+                    <input type="hidden" name="level" id="hiddenUserLevel">
+                    <div style="width: 550px;padding-left: 10px">
+                        <div class="form-group">
+                            <label for="textname">用户名</label>
+                            <input type="text" class="form-control" id="textname" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label for="director">验证密码</label>
+                            <input type="password" class="form-control" name="checkpass" id="director"
+                                   onblur="checkPass(this.value)">
+                        </div>
+                        <span style="color: red;font-size: 15px" id="span1"></span>
+                        <div class="form-group">
+                            <label for="newpass">新密码</label>
+                            <input type="password" class="form-control" name="password" id="newpass" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">电话</label>
+                            <input type="phone" class="form-control" name="phone" id="phone" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">邮箱</label>
+                            <input type="email" class="form-control" name="email" id="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label>修改头像</label>
+                            <input type="file" name="userpic">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary block full-width m-b" id="submit" disabled>更 新</button>
+                </form>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <!--<button type="button" onclick="subform()" class="btn btn-primary"></button>-->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--  修改旅游模态框  -->
+<div class="modal fade" id="updateTour" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span
+                        class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="myModalLabel2">修改内容</h4>
+            </div>
+            <div class="modal-body">
+                <!-- 1. 获得参数  2.根据主键查询 3.ma.setName()  4.update  -->
+                <form th:action="@{/tour/updateTour}" enctype="multipart/form-data"
+                      method="post"
+                      class="form-horizontal"
+                      role="form">
+                    <input type="hidden" name="hiddenPic" id="hiddenTourPic">
+                    <input type="hidden" name="id" id="ti">
+
+                    <div style="width: 550px;padding-left: 10px">
+                        <div class="form-group">
+                            <label>商品名</label>
+                            <input type="text" class="form-control" name="name" id="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>简述</label>
+                            <input type="text" class="form-control" name="simpleDes" id="simpleDes" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="textname">详情</label>
+                            <input type="text" class="form-control" name="description" id="description" required>
+                        </div>
+                        <div class="form-group">
+                            <label>更新图片</label>
+                            <input type="file" name="tourPic">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary block full-width m-b" id="tourSubmit">更 新</button>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <!--<button type="button" onclick="subform()" class="btn btn-primary"></button>-->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/jquery.min.js}"></script>
+<script th:src="@{/js/bootstrap.min.js}"></script>
+<script th:src="@{/js/bootstrap-table.js}"></script>
+<script th:src="@{/js/bootstrap-table-zh-CN.js}"></script>
+<script th:inline="javascript">
+    const path = [[${#request.getContextPath()}]];
+    let user = [[${session.user}]];
+
+    function checkPass(msg) {
+        $.ajax({
+            type: 'post',
+            url: path + '/user/checkPass',
+            data: 'pass=' + msg + "&name=" + user.name,
+            dataType: 'text',
+            success: (msg) => {
+                document.getElementById("submit").removeAttribute("disabled");
+                if (msg === "success") {
+                    $("#span1").html("");
+                } else {
+                    $("#span1").html("密码错误");
+                    $("#submit").attr("disabled", "true");
+                }
+            }
+        });
+    }
+
+    function updateUser() {
+        $("#hiddenUserId").val(user.id);
+        $("#hiddenUserPic").val(user.savePath);
+        $("#hiddenUserName").val(user.name);
+        $("#hiddenUserLevel").val(user.level);
+        $("#textname").val(user.name);
+        $("#phone").val(user.phone);
+        $("#email").val(user.email);
+        $("#updateUser").modal("show");
+    }
+
+    $(function () {
+        querydata();
+    });
+
+    function querydata() {
+        $("#tb").bootstrapTable({
+            url: path + "/tour/list",  //获取数据的地址
+            pagination: true,    //是否分页 默认 不分
+            pageSize: 3,         //每页显示记录
+            pageNumber: 1,       // 从第几页开始查询
+            pageList: [3, 4, 5],   //切换 pageSize
+            sidePagination: "server",
+            queryParamsType: "undefined",
+            queryParams: function (params) {
+                let tourname = $("#tourname").val();
+                let newParams = {
+                    pageNumber: params.pageNumber,
+                    pageSize: params.pageSize,
+                }
+                newParams.tourname = tourname;
+                return newParams;
+            },
+            columns: [
+                {
+                    field: "savePath",
+                    title: "图片",
+                    formatter: function (value, row, index) {
+                        return "<img src='" + row.savePath + "' width='150px' height='100px'>";
+                    }
+                },{
+                    field: "tourNum",
+                    title: "商品编号"
+                }, {
+                    field: "name",
+                    title: "商品名"
+                }, {
+                    field: "type",
+                    title: "类型"
+                }, {
+                    field: "price",
+                    title: "价格"
+                }, {
+                    field: "simpleDes",
+                    title: "简述"
+                }, {
+                    field: "description",
+                    title: "详情"
+                }, {
+                    field: "peopleNum",
+                    title: "报名人数"
+                }, {
+                    field: "total",
+                    title: "总费用"
+                }, {
+                    //field: "status",
+                    title: "操作",
+                    formatter: function (value, row, index) {
+                        let info = "<a class='btn btn-primary' id='info'>修改</a>";
+                        let ud = "<a class='btn btn-" + (row.status == 1 ? "success" : "danger") + "' href='javascript:void(0);' id='ud' >" + (row.status == 1 ? "下架" : "上架") + "</a>"
+                        return info + " | " + ud;
+                    },
+                    events: etevents
+                }]
+        });
+    }
+
+    window.etevents={
+        'click #ud':function(event,value,row,index){
+            $.post(path+"/tour/changeStatus","id="+row.id,function(msg){
+                /*alert("修改状态成功");*/
+                console.log("-=-=-=-=-=-=-=-=-=-=-=");
+                $("#tb").bootstrapTable("refresh")
+            },"text");
+        },
+        'click #info':function(event,value,row,index){
+            $("#name").val(row.name);
+            $("#simpleDes").val(row.simpleDes);
+            $("#description").val(row.description);
+            $("#hiddenTourPic").val(row.savePath);
+            $("#ti").val(row.id);
+            $("#updateTour").modal("show");
+        }
+    }
+
+    function queryByTj() {
+        $("#tb").bootstrapTable("refresh");
+    }
+
+</script>
+</body>
+</html>

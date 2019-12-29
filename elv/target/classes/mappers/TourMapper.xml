@@ -378,4 +378,13 @@
       save_path = #{savePath,jdbcType=VARCHAR}
     where id = #{id,jdbcType=INTEGER}
   </update>
+
+  <update id="updateTour" parameterType="com.stone.etour.bean.Tour">
+    update etour_tour
+    set name = #{name},
+    simple_des = #{simpleDes},
+    description = #{description},
+    save_path = #{savePath}
+    where id = #{id}
+  </update>
 </mapper>

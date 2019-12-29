@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>首页</title>
+    <link th:href="@{/css/bootstrap.min.css}" rel="stylesheet">
+    <link th:href="@{/css/bootstrap-table.css}" rel="stylesheet">
+</head>
+<body>
+<!-- 导航 -->
+<nav class="navbar navbar-default" role="navigation" style="padding-bottom: 0">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="#">后台信息管理</a>
+        </div>
+        <ul class="nav navbar-nav navbar-right">
+            <li><img class="img-circle" style="height: 50px;width: 50px" id="img" th:src="${session.user.savePath}">&nbsp;&nbsp;
+            </li>
+            <li class="navbar-brand"><span th:text="${session.user.name}"></span></li>
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">操作<span class="caret"></span></a>
+                <ul class="dropdown-menu" role="menu">
+                    <li><a onclick="updateUser()">个人信息维护</a></li>
+                    <li><a th:href="@{/page/to_order}">订单管理</a></li>
+                    <li><a th:href="@{/user/logout}">退出</a></li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+</nav>
+<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true" style="padding-top: 0;">
+    <div class="panel-body">
+        <form class="form-inline" role="form">
+            <div class="form-group">
+                <label>商品名:</label>
+                <input type="text" class="form-control"
+                       id="tourname"
+                       placeholder="商品名">
+            </div>
+            <button type="button" class="btn btn-primary" onclick="queryByTj()">查询</button>
+        </form>
+    </div>
+</div>
+
+<div class="ibox-content">
+    <div class="row" id="data">
+    </div>
+    <p style="text-align: center">
+        <button type="button" class="btn btn-outline btn-primary" onclick="firstpage()">首页</button>
+        <button type="button" class="btn btn-outline btn-success" onclick="prepage()">上一页</button>
+        <button type="button" class="btn btn-outline btn-info" onclick="nextpage()">下一页</button>
+        <button type="button" class="btn btn-outline btn-warning" onclick="lastpage()">末页</button>
+        &nbsp;&nbsp;&nbsp;
+    </p>
+</div>
+
+<!--  修改个人资料模态框  -->
+<div class="modal fade" id="updateUser" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span
+                        class="sr-only">Close</span></button>
+                <h4 class="modal-title" >Modal title</h4>
+            </div>
+            <div class="modal-body">
+                <!-- 1. 获得参数  2.根据主键查询 3.ma.setName()  4.update  -->
+                <form th:action="@{/user/updateUser}" enctype="multipart/form-data"
+                      method="post"
+                      class="form-horizontal"
+                      role="form">
+                    <input type="hidden" name="id" id="hiddenUserId">
+                    <input type="hidden" name="hiddenPic" id="hiddenUserPic">
+                    <input type="hidden" name="name" id="hiddenUserName">
+                    <input type="hidden" name="level" id="hiddenUserLevel">
+                    <div style="width: 550px;padding-left: 10px">
+                        <div class="form-group">
+                            <label for="textname">用户名</label>
+                            <input type="text" class="form-control" id="textname" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label for="director">验证密码</label>
+                            <input type="password" class="form-control" name="checkpass" id="director"
+                                   onblur="checkPass(this.value)">
+                        </div>
+                        <span style="color: red;font-size: 15px" id="span1"></span>
+                        <div class="form-group">
+                            <label for="newpass">新密码</label>
+                            <input type="password" class="form-control" name="password" id="newpass" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">电话</label>
+                            <input type="phone" class="form-control" name="phone" id="phone" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">邮箱</label>
+                            <input type="email" class="form-control" name="email" id="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label>修改头像</label>
+                            <input type="file" name="userpic">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary block full-width m-b" id="submit" disabled>更 新</button>
+                </form>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <!--<button type="button" onclick="subform()" class="btn btn-primary"></button>-->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--  旅游详情模态框  -->
+<div class="modal fade" id="xiangqing" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" id="title">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span
+                        class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="myModalLabel">详情</h4>
+                <!--<h4 class="modal-title" id="xq_name"></h4>-->
+            </div>
+            <div class="modal-body" id="maindiv">
+                <div class="form-group">
+                    <label class="col-sm-2 control-label" style="margin-top: 7px">商品名:</label>
+                    <div class="col-sm-10">
+                        <output id="xq_name"></output>
+                    </div>
+                </div>
+                <br>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label" style="margin-top: 7px">价格:</label>
+                    <div class="col-sm-10">
+                        <output id="xq_price"></output>
+                    </div>
+                </div>
+                <br>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label" style="margin-top: 7px">详情:</label>
+                    <div class="col-sm-10">
+                        <output id="xq_info"></output>
+                    </div>
+                </div>
+                <br>
+                <br>
+                <!--图片-->
+            </div>
+            <div class="modal-footer">
+                <div class="form-group" style="text-align: center" id="xq_pic">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 下单页模态框 -->
+<div class="modal fade" id="buy" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span
+                        class="sr-only">Close</span></button>
+                <h4 class="modal-title">下单</h4>
+            </div>
+            <div class="modal-body">
+                <form th:action="@{/tour/order}"
+                      method="post"
+                      class="form-horizontal"
+                      role="form">
+                <div class="form-group">
+                    <label class="col-sm-2 control-label" style="margin-top: 7px">商品名:</label>
+                    <div class="col-sm-10">
+                        <output id="buy_name"></output>
+                    </div>
+                </div>
+                <br><br>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label" style="margin-top: 7px">价格:</label>
+                    <div class="col-sm-10">
+                        <output id="buy_price"></output>
+                    </div>
+                </div>
+                <br><br>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label" style="margin-top: 7px">出游人数:</label>
+                    <div class="col-sm-10">
+                        <input type="number" min="1" class="form-control" name="number" id="buy_number" onchange="calculate(this.value)" required>
+                    </div>
+                </div>
+                <br><br>
+                <div class="form-group">
+                    <label class="col-sm-2 control-label" style="margin-top: 7px">总费用:</label>
+                    <div class="col-sm-10">
+                        <output class="form-control" id="buy_total"></output>
+                    </div>
+                </div>
+                <input type="hidden" id="hiddenTotal" name="hiddenTotal">
+                <input type="hidden" id="hiddenId" name="hiddenId">
+                <input type="hidden" name="hiddenuser" th:value="${session.user.name}">
+                <br>
+                <br>
+                <br>
+                <button type="submit" class="btn btn-warning" style="width: 100%">确认下单</button>
+            </form>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/jquery.min.js}"></script>
+<script th:src="@{/js/bootstrap.min.js}"></script>
+<script th:src="@{/js/bootstrap-table.js}"></script>
+<script th:src="@{/js/bootstrap-table-zh-CN.js}"></script>
+<script th:inline="javascript">
+    const path = [[${#request.getContextPath()}]];
+    let user = [[${session.user}]];
+
+    function checkPass(msg) {
+        $.ajax({
+            type: 'post',
+            url: path + '/user/checkPass',
+            data: 'pass=' + msg + "&name=" + user.name,
+            dataType: 'text',
+            success: (msg) => {
+                document.getElementById("submit").removeAttribute("disabled");
+                if (msg === "success") {
+                    $("#span1").html("");
+                } else {
+                    $("#span1").html("密码错误");
+                    $("#submit").attr("disabled", "true");
+                }
+            }
+        });
+    }
+
+    function updateUser() {
+        $("#hiddenUserId").val(user.id);
+        $("#hiddenUserPic").val(user.savePath);
+        $("#hiddenUserName").val(user.name);
+        $("#hiddenUserLevel").val(user.level);
+        $("#textname").val(user.name);
+        $("#phone").val(user.phone);
+        $("#email").val(user.email);
+        $("#updateUser").modal("show");
+    }
+
+    let pre = "";
+    let next = "";
+    let last = "";
+    let pageNumber = 1;
+    let pageSize = 8;
+
+    $(function () {
+        queryAllTour();
+    });
+
+    function queryAllTour() {
+        let tourname = $("#tourname").val();
+        console.log(tourname);
+        $("#data").html("");
+        /*let data = {"pageNumber":pageNumber,"pageSize":pageSize,"tourname":tourname};*/
+        $.post(path + "/tour/list", "pageNumber=" + pageNumber + "&pageSize=" + pageSize + "&tourname=" + tourname, function (msg) {
+            last = msg.pageCount;
+            //setcurrent();
+            let pics = "";
+            $.each(msg.rows, function (i, tour) {
+                if (tour.status == 0) {
+                    return;
+                }
+
+                pics += "<div class=''>" +
+                    "<div class='col-md-3 col-sm-6'>" +
+                    "<div class='thumbnail'>" +
+                    "<a href='#' onclick='queryOne(" + tour.id + ")'><img src='" + tour.savePath + "' style='height: 200px;'></a>" +
+                    "<div class='caption'>" +
+                    "<h3 style='text-align: center'>" + tour.name + "</h3>" +
+                    "<p><a href='#' class='btn btn-primary' style='width: 100%' onclick='buy("+tour.id+")' role='button'>下单</a></p>"+
+                    "</div> </div> </div> </div>";
+            });
+            $("#data").html(pics);
+
+        }, "json");
+    }
+
+
+    function queryOne(id) {
+        $.post(path + "/tour/xq", "tourid=" + id, (msg) => {
+            console.log(msg.name);
+            $("#xq_name").text(msg.name);
+            $("#xq_price").text(msg.price);
+            $("#xq_info").html(msg.description);
+            $("#xq_pic").html(
+                "<img src='"+ msg.savePath +"' width='300px' height='200px'/>"
+            );
+        }, "json");
+        $("#xiangqing").modal("show");
+    }
+
+    function buy(id) {
+        $("#buy_number").val(0);
+        $("#buy_total").text(0);
+        $.post(path + "/tour/xq", "tourid=" + id, (msg) => {
+            console.log(msg.name);
+            $("#buy_name").text(msg.name);
+            $("#buy_price").text(msg.price);
+            $("#hiddenId").val(msg.id);
+        }, "json");
+        $("#buy").modal("show");
+    }
+
+    function calculate(data){
+        let total = 0 ;
+        let price = $("#buy_price").val();
+        total = price * data;
+        $("#buy_total").text(total);
+        $("#hiddenTotal").val(total);
+    }
+
+    function prepage() {
+        if (pageNumber == 1) {
+            window.location.href = "javascript:void(0)";
+            return;
+        }
+        pageNumber -= 1;
+        queryAllTour();
+    }
+
+    function firstpage() {
+        if (pageNumber == 1) {
+            window.location.href = "javascript:void(0)";
+            return;
+        }
+        pageNumber = 1;
+        queryAllTour();
+    }
+
+    function nextpage() {
+        if (pageNumber == last) {
+            window.location.href = "javascript:void(0)";
+            return;
+        }
+        pageNumber += 1;
+        queryAllTour();
+    }
+
+    function lastpage() {
+        if (pageNumber == last) {
+            window.location.href = "javascript:void(0)";
+            return;
+        }
+        pageNumber = last;
+        queryAllTour();
+    }
+
+    function queryByTj() {
+        queryAllTour();
+    }
+
+</script>
+</body>
+</html>
